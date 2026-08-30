@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jan Prashasan Setu — Grievance Redressal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<!-- Upgraded Modern Fonts: Outfit for Catchy Headers, Inter for Clean Body, JetBrains Mono for Tech Tags -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<!-- EXIF reader: pulls embedded GPS coordinates out of the attached photo -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.js"></script>
+<style>
+:root{
+  --saffron: #FF671F;
+  --green: #046A38;
+  --navy: #06038D;
+  --ink: #0f172a;
+  --ink-soft: #475569;
+  --line: #e2e8f0;
+  --white: #ffffff;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background: linear-gradient(135deg, rgba(255, 103, 31, 0.35) 0%, rgba(255, 255, 255, 1) 50%, rgba(4, 106, 56, 0.25) 100%);
+  background-attachment: fixed;
+  color:var(--ink);
+  font-family:'Inter', sans-serif;
+  line-height:1.6;
+  position: relative;
+  z-index: 0;
+}
+h1,h2,h3,h4{
+  font-family:'Outfit', sans-serif;
+  font-weight:700;
+  margin:0 0 .4em;
+  letter-spacing: -0.02em;
+}
+.mono{font-family:'JetBrains Mono', monospace;}
+a{color:var(--navy);}
+button{font-family:inherit;cursor:pointer;}
+::selection{background:var(--saffron);color:var(--white);}
+
+/* ---------- masthead ---------- */
+.masthead{
+  background:var(--saffron);
+  color:var(--white);
+  padding:20px 28px 16px;
+  border-bottom:8px solid var(--green);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.15);
+}
+.masthead-inner{max-width:1080px;margin:0 auto;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;}
+.masthead .title{display:flex;align-items:center;gap:16px;}
+.seal-mark{
+  width:48px;height:48px;border-radius:50%;
+  border:3px solid var(--navy);
+  background: rgba(255, 255, 255, 0.95);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Outfit', sans-serif;font-weight:800;font-size:18px;
+  color:var(--navy);flex-shrink:0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.masthead h1{font-size:28px;color:var(--white);letter-spacing:-0.01em;font-weight:800;line-height:1.1;}
+.masthead .sub{font-size:13px;color:rgba(255,255,255,0.95);letter-spacing:1px;text-transform:uppercase;margin-top:4px;font-weight:600;font-family:'Outfit', sans-serif;}
+.masthead .dateline{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:rgba(255,255,255,0.9);text-align:right;font-weight:500;}
+
+nav.tabs{
+  max-width:1080px;margin:0 auto;display:flex;gap:4px;padding:0 28px;
+  background:rgba(255,255,255,0.6);
+  backdrop-filter: blur(8px);
+  border-bottom:1px solid var(--line);
+}
+nav.tabs button{
+  background:none;border:none;padding:14px 20px;font-size:14.5px;font-weight:600;
+  color:var(--ink-soft);border-bottom:3px solid transparent;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+nav.tabs button.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:700;}
+nav.tabs button:hover:not(.active){color:var(--navy);background:rgba(255,255,255,0.5);}
+
+main{max-width:1080px;margin:0 auto;padding:30px 28px 70px;}
+.view{display:none;}
+.view.active{display:block; animation: fadeIn 0.3s ease;}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+.panel{
+  background:rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:32px;
+  margin-bottom:24px;
+  box-shadow:0 10px 25px -5px rgba(0,0,0,.05), 0 8px 10px -6px rgba(0,0,0,.01);
+}
+.panel-title-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--navy);margin-bottom:8px;display:block;font-weight:700;}
+
+label{display:block;font-size:13.5px;font-weight:600;color:var(--ink);margin:16px 0 8px;font-family:'Outfit', sans-serif;}
+textarea,input[type=text],input[type=search],select{
+  width:100%;padding:12px 16px;border:1px solid #cbd5e1;border-radius:8px;
+  font-family:'Inter', sans-serif;font-size:15px;background:var(--white);color:var(--ink);
+  transition: all 0.2s ease;
+}
+textarea{min-height:110px;resize:vertical;}
+textarea:focus,input:focus,select:focus{outline:none; border-color:var(--navy); box-shadow: 0 0 0 3px rgba(6,3,141,0.1);}
+
+.btn{
+  display:inline-block;background:var(--navy);color:var(--white);border:none;
+  padding:12px 24px;border-radius:8px;font-weight:600;font-size:15px;
+  font-family:'Outfit', sans-serif; letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(6,3,141,0.2);
+}
+.btn:hover{background:#04025c; transform: translateY(-2px); box-shadow: 0 6px 8px -1px rgba(6,3,141,0.3);}
+.btn.secondary{background:transparent;color:var(--navy);border:2px solid var(--navy);box-shadow:none;}
+.btn.secondary:hover{background:var(--navy);color:var(--white);transform: translateY(-1px);}
+.btn.green{background:var(--green);box-shadow: 0 4px 6px -1px rgba(4,106,56,0.2);}
+.btn.green:hover{background:#034d28;box-shadow: 0 6px 8px -1px rgba(4,106,56,0.3);}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
+
+#map-picker{height:280px;border:2px solid var(--line);margin-top:8px;border-radius:8px;z-index: 10;}
+.hint{font-size:12.5px;color:var(--ink-soft);margin-top:6px;}
+
+.flash{padding:14px 20px;border-left:4px solid var(--navy);background:#e8eaf6;font-size:14.5px;margin-bottom:20px;border-radius: 0 8px 8px 0; font-weight:500;}
+.flash.success{border-color:var(--green);background:#e6f4ea;color:#0d532a;}
+.flash.error{border-color:var(--saffron);background:#fce8e6;color:#c5221f;}
+.flash.info{border-color:var(--navy);background:#e8eaf6;}
+
+.stamp{
+  display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;
+  padding:4px 10px;border-radius:6px;letter-spacing:.5px;border:1px solid currentColor;
+}
+.stamp.Open{color:var(--navy);background:#e8eaf6;border-color:#c7ceeb;}
+.stamp.Escalated{color:var(--saffron);background:#fff3e0;border-color:#ffe0b2;}
+.stamp.Resolved-Pending-Confirmation{color:var(--green);background:#e8f5e9;border-color:#c8e6c9;}
+.stamp.Closed{color:#475569;background:#f1f5f9;border-color:#cbd5e1;}
+.stamp.Critical-Overdue{color:var(--white);background:#DC2626;border-color:#DC2626;}
+
+.ref-chip{font-family:'JetBrains Mono',monospace;background:var(--navy);color:var(--white);padding:4px 10px;border-radius:6px;font-size:12.5px;letter-spacing:1px;font-weight:700;}
+
+.complaint-row{
+  display:flex;justify-content:space-between;gap:16px;align-items:flex-start;
+  padding:18px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+}
+.complaint-row:hover{background: rgba(255,255,255,0.9); box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-bottom-color:transparent;}
+.complaint-row:last-child{border-bottom:none;}
+.complaint-main{flex:1;min-width:240px;}
+.complaint-meta{font-size:12.5px;color:var(--ink-soft);margin-top:6px;font-weight:500;}
+.complaint-side{display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+@media(max-width:760px){.grid2{grid-template-columns:1fr;}}
+
+.severity{font-weight:800; font-family:'Outfit', sans-serif;}
+.sev-Critical{color:#DC2626;}
+.sev-High{color:#d94a0d;}
+.sev-Medium{color:#D97706;}
+.sev-Low{color:var(--green);}
+
+table{width:100%;border-collapse:separate; border-spacing: 0; font-size:14px;}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);}
+th{font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-soft);background:rgba(0,0,0,0.02);font-weight:700;}
+th:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+th:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+
+.filters{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+.filters select,.filters input{width:auto;flex:1;min-width:160px; font-weight:500;}
+
+.history-item{display:flex;gap:14px;padding:12px 0;border-bottom:1px dashed var(--line);font-size:14px;}
+.history-item:last-child{border-bottom:none;}
+.history-dot{width:10px;height:10px;border-radius:50%;background:var(--saffron);margin-top:6px;flex-shrink:0;box-shadow:0 0 0 3px rgba(255,103,31,0.2);}
+.response-item{background:rgba(255,255,255,0.7);border-left:4px solid var(--green);padding:14px 18px;margin-bottom:12px;font-size:14.5px;border-radius: 0 8px 8px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+.response-item.resolution{border-color:var(--navy); background: #f8fafc;}
+
+footer{max-width:1080px;margin:0 auto;padding:24px 32px 40px;font-size:13px;color:var(--ink-soft);border-top:1px solid var(--line);text-align:center;background:rgba(255,255,255,0.7);backdrop-filter:blur(8px);border-radius:16px 16px 0 0;font-weight:500;}
+.empty-state{padding:48px 20px;text-align:center;color:var(--ink-soft);font-weight:500;background:rgba(0,0,0,0.015);border-radius:12px; border: 2px dashed var(--line);}
+.two-col-form{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;}
+@media(max-width:700px){.two-col-form{grid-template-columns:1fr;}}
+.classify-hint{margin-top:10px;font-size:13px;color:var(--navy);font-family:'JetBrains Mono',monospace;min-height:18px;font-weight:600;}
+
+/* Profile list hover effect */
+.profile-item { padding:14px; border-bottom:1px solid var(--line); display:flex; flex-direction:column; gap:8px; transition: background 0.2s ease; border-radius:6px; margin-bottom:4px; }
+.profile-item:hover { background: rgba(0,0,0,0.03); }
+</style>
+</head>
+<body>
+
+<!-- Ashoka Chakra Center Watermark -->
+<div style="position:fixed; top:0; left:0; width:100vw; height:100vh; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:-1; overflow:hidden;" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="width:40vw; height:40vw; max-width:450px; color:#06038D; opacity:0.04;">
+        <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="1"/>
+        <circle cx="50" cy="50" r="6" fill="currentColor"/>
+        <g stroke="currentColor" stroke-width="1.2">
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(0 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(15 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(30 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(45 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(60 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(75 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(90 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(105 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(120 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(135 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(150 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(165 50 50)" />
+        </g>
+    </svg>
+</div>
+
+<div class="masthead">
+  <div class="masthead-inner">
+    <div class="title">
+      <div class="seal-mark">JPS</div>
+      <div>
+        <h1>Jan Prashasan Setu</h1>
+        <div class="sub">People's Administration Bridge · Grievance Redressal</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:20px; align-items:center;">
+      <div class="dateline" id="dateline"></div>
+      
+      <!-- Profile / My Complaints Widget -->
+      <div style="position:relative;">
+        <button id="my-profile-btn" class="btn secondary" style="border-color:rgba(255,255,255,0.5); color:white; padding:6px 12px; font-size:13px; background:rgba(0,0,0,0.1); transition:all 0.3s;">
+          👤 My Complaints <span id="my-complaints-badge" style="background:var(--navy); color:white; border-radius:50%; padding:2px 6px; font-size:11px; margin-left:4px; display:none; transition:all 0.3s;">0</span>
+        </button>
+        
+        <!-- WIDER DROPDOWN -->
+        <div id="my-profile-dropdown" style="display:none; position:absolute; top:110%; right:0; background:white; color:var(--ink); width:360px; border-radius:12px; box-shadow:0 12px 35px rgba(0,0,0,0.25); padding:16px; border:1px solid var(--line); z-index:100;">
+          <div style="display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid var(--line); margin-bottom:12px; padding-bottom:10px;">
+            <h4 style="font-size:16px; margin:0; font-family:'Outfit', sans-serif;">My Submitted Complaints</h4>
+          </div>
+          <div id="my-complaints-list" style="max-height:360px; overflow-y:auto; font-size:13px;">
+            <div style="color:var(--ink-soft); font-style:italic;">No complaints submitted from this device yet.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<nav class="tabs">
+  <button class="active" data-view="file">File a Complaint</button>
+  <button data-view="track">Track a Complaint</button>
+  <button data-view="board">Public Register</button>
+  <button data-view="officer">Officer Portal</button>
+</nav>
+
+<main>
+
+<!-- ============ FILE ============ -->
+<section class="view active" id="view-file">
+  <div class="panel">
+    <span class="eyebrow">Citizen Intake</span>
+    <h2>Describe the civic issue</h2>
+    <p style="color:var(--ink-soft);font-size:15px; margin-bottom:24px;">Write in your own words, in English or Hindi/Hinglish. The system reads your description, works out which department is responsible, checks whether someone nearby has already reported the same issue, and gives you a tracking code.</p>
+    
+    <div id="flash-file"></div>
+    
+    <label for="desc">What's the problem?</label>
+    <div style="position:relative;">
+      <textarea id="desc" placeholder="e.g. Bijli ka transformer school ke paas spark kar raha hai, bahut khatarnak hai" style="padding-right:52px;"></textarea>
+      <button type="button" id="voice-input-btn" title="Speak your complaint" style="position:absolute; right:10px; bottom:10px; width:38px; height:38px; border-radius:50%; border:2px solid var(--navy); background:var(--white); color:var(--navy); font-size:16px; display:flex; align-items:center; justify-content:center; padding:0; box-shadow:0 2px 6px rgba(0,0,0,.08); transition: all 0.2s ease;">🎤</button>
+    </div>
+    <div class="hint" id="voice-status" style="margin-top:6px;"></div>
+    <div class="classify-hint" id="classify-hint"></div>
+
+    <label style="margin-top:24px;">Attach a live photo of the problem <span style="color:#DC2626;">(required)</span></label>
+    <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+      <label for="photo-input" class="btn secondary" style="margin:0; padding:10px 20px; font-size:14px;">📷 Take Live Photo</label>
+      <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none;">
+      <button type="button" class="btn secondary" id="photo-clear-btn" style="display:none; padding:10px 16px; font-size:13px; border-color:#DC2626; color:#DC2626;">Remove</button>
+      <img id="photo-preview" style="display:none; max-height:110px; border-radius:8px; border:1px solid var(--line); box-shadow:0 2px 6px rgba(0,0,0,.08);">
+    </div>
+    <div class="hint" id="photo-hint">A live photo is compulsory for every complaint — it opens your camera directly on a phone. Keep location tagging enabled in your camera app: we read the GPS coordinates embedded in the photo to pin your location below, so this helps officers verify the issue and speeds up resolution.</div>
+
+    <label style="margin-top:24px;">Location <span style="color:#DC2626;">(auto-detected from photo)</span></label>
+    <div id="map-picker"></div>
+    <div class="hint">Location is read automatically from the GPS data embedded in your photo — there is no manual pin option, so every report is tied to where the photo was actually taken. <span id="latlon-readout" class="mono" style="font-weight:700; color:var(--navy); margin-left:8px;"></span></div>
+    <div id="geo-status" class="hint" style="margin-top:4px;"></div>
+
+    <div class="two-col-form" style="margin-top:24px;">
+      <div>
+        <label for="address">Landmark / Address (optional)</label>
+        <input type="text" id="address" placeholder="e.g. MG Road flyover, Bengaluru">
+      </div>
+      <div>
+        <label for="contact">Contact (optional, kept private)</label>
+        <input type="text" id="contact" placeholder="Phone or email — for updates only">
+      </div>
+    </div>
+
+    <button class="btn" style="margin-top:32px; width:100%; font-size:16px; padding:14px;" id="submit-btn">Process via AI & Submit</button>
+  </div>
+</section>
+
+<!-- ============ TRACK ============ -->
+<section class="view" id="view-track">
+  <div class="panel">
+    <span class="eyebrow">Citizen Lookup</span>
+    <h2>Track your complaint</h2>
+    <div style="display:flex;gap:12px;margin-top:16px;">
+      <input type="text" id="track-ref" placeholder="Enter your reference code (e.g. JPS-A1B2C3)" style="flex:1; font-family:'JetBrains Mono', monospace; font-size:16px; letter-spacing:1px;">
+      <button class="btn" id="track-btn" style="padding:0 32px;">Look up</button>
+    </div>
+    <div id="track-result" style="margin-top:28px;"></div>
+  </div>
+</section>
+
+<!-- ============ BOARD ============ -->
+<section class="view" id="view-board">
+  <div class="panel">
+    <span class="eyebrow">Identity-Free Ledger</span>
+    <h2>Live Grievance Register</h2>
+    <p style="color:var(--ink-soft);font-size:15px; margin-bottom:24px;">Every complaint and official response is permanently browsable for transparency and accountability. No citizen identity is ever shown here.</p>
+    
+    <div class="filters">
+      <input type="search" id="board-q" placeholder="Search keywords...">
+      <select id="board-dept"><option value="">All Departments</option></select>
+      <select id="board-status">
+        <option value="">All Statuses</option>
+        <option>Open</option><option>Escalated</option><option>Critical-Overdue</option>
+        <option>Resolved-Pending-Confirmation</option><option>Closed</option>
+      </select>
+    </div>
+    <div id="board-list"></div>
+  </div>
+</section>
+
+<!-- ============ OFFICER ============ -->
+<section class="view" id="view-officer">
+  <div class="panel" id="officer-login-panel">
+    <span class="eyebrow">Authenticated Access</span>
+    <h2>Officer Portal Login</h2>
+    <div id="flash-officer"></div>
+    <div class="grid2" style="align-items:end; margin-top:24px;">
+      <div><label for="off-user">Username</label><input type="text" id="off-user" placeholder="public-works-roads-L1" class="mono"></div>
+      <div><label for="off-pass">Password</label><input type="text" id="off-pass" placeholder="password123" class="mono"></div>
+    </div>
+    <button class="btn" style="margin-top:24px;" id="off-login-btn">Secure Login</button>
+    
+    <div style="margin-top:40px; padding-top:24px; border-top:1px solid var(--line);">
+      <h4 style="font-family:'Inter', sans-serif; font-size:14px; color:var(--ink-soft);">Demo Credentials (password123)</h4>
+      <table style="margin-top:12px;">
+        <thead><tr><th>Department</th><th>Usernames (L1/L2/L3)</th></tr></thead>
+        <tbody id="officer-roster"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel" id="officer-dashboard-panel" style="display:none;">
+    <div class="panel-title-row" style="margin-bottom:24px; border-bottom:1px solid var(--line); padding-bottom:16px;">
+      <div>
+        <span class="eyebrow" id="off-dept-name" style="font-size:13px; color:var(--saffron);"></span>
+        <h2 style="margin:0;">Officer Dashboard <span id="off-level-tag"></span></h2>
+      </div>
+      <button class="btn secondary" id="off-logout-btn">Log out</button>
+    </div>
+    <div id="officer-queue"></div>
+  </div>
+
+  <div class="panel" id="officer-detail-panel" style="display:none;">
+    <button class="btn secondary" id="officer-back-btn" style="margin-bottom:24px;">← Back to Queue</button>
+    <div id="officer-detail-body"></div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <strong style="color:var(--navy); font-family:'Outfit', sans-serif; font-size:15px;">Smart India Hackathon 2026 Prototype</strong><br><br>
+  Jan Prashasan Setu is backed by a real server and a SQLite database — the public register persists across visits and devices. Escalation sweeps run automatically on the server every 20 seconds against compressed demo SLAs (seconds instead of hours).
+  <br>
+  <button class="btn secondary" id="reset-demo-btn" style="margin-top:20px;padding:8px 20px;font-size:13px;">Reset & Reseed Demo Data</button>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>

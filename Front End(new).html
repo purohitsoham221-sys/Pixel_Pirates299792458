@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+  const BACKEND_URL = 'http://localhost:3000';
+  if (window.location.protocol === 'file:') {
+    window.location.replace(BACKEND_URL);
+  }
+</script>
+<title>Jan Prashasan Setu — Grievance Redressal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<!-- Upgraded Modern Fonts: Outfit for Catchy Headers, Inter for Clean Body, JetBrains Mono for Tech Tags -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<!-- EXIF reader: pulls embedded GPS coordinates out of the attached photo -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.js"></script>
+<style>
+:root{
+  --saffron: #FF671F;
+  --green: #046A38;
+  --navy: #06038D;
+  --ink: #0f172a;
+  --ink-soft: #475569;
+  --line: #e2e8f0;
+  --white: #ffffff;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background: linear-gradient(135deg, rgba(255, 103, 31, 0.35) 0%, rgba(255, 255, 255, 1) 50%, rgba(4, 106, 56, 0.25) 100%);
+  background-attachment: fixed;
+  color:var(--ink);
+  font-family:'Inter', sans-serif;
+  line-height:1.6;
+  position: relative;
+  z-index: 0;
+}
+h1,h2,h3,h4{
+  font-family:'Outfit', sans-serif;
+  font-weight:700;
+  margin:0 0 .4em;
+  letter-spacing: -0.02em;
+}
+.mono{font-family:'JetBrains Mono', monospace;}
+a{color:var(--navy);}
+button{font-family:inherit;cursor:pointer;}
+::selection{background:var(--saffron);color:var(--white);}
+
+/* ---------- masthead ---------- */
+.masthead{
+  background:var(--saffron);
+  color:var(--white);
+  padding:20px 28px 16px;
+  border-bottom:8px solid var(--green);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.15);
+}
+.masthead-inner{max-width:1080px;margin:0 auto;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;}
+.masthead .title{display:flex;align-items:center;gap:16px;}
+.seal-mark{
+  width:48px;height:48px;border-radius:50%;
+  border:3px solid var(--navy);
+  background: rgba(255, 255, 255, 0.95);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Outfit', sans-serif;font-weight:800;font-size:18px;
+  color:var(--navy);flex-shrink:0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.masthead h1{font-size:28px;color:var(--white);letter-spacing:-0.01em;font-weight:800;line-height:1.1;}
+.masthead .sub{font-size:13px;color:rgba(255,255,255,0.95);letter-spacing:1px;text-transform:uppercase;margin-top:4px;font-weight:600;font-family:'Outfit', sans-serif;}
+.masthead .dateline{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:rgba(255,255,255,0.9);text-align:right;font-weight:500;}
+
+nav.tabs{
+  max-width:1080px;margin:0 auto;display:flex;gap:4px;padding:0 28px;
+  background:rgba(255,255,255,0.6);
+  backdrop-filter: blur(8px);
+  border-bottom:1px solid var(--line);
+}
+nav.tabs button{
+  background:none;border:none;padding:14px 20px;font-size:14.5px;font-weight:600;
+  color:var(--ink-soft);border-bottom:3px solid transparent;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+nav.tabs button.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:700;}
+nav.tabs button:hover:not(.active){color:var(--navy);background:rgba(255,255,255,0.5);}
+
+main{max-width:1080px;margin:0 auto;padding:30px 28px 70px;}
+.view{display:none;}
+.view.active{display:block; animation: fadeIn 0.3s ease;}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+.panel{
+  background:rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:32px;
+  margin-bottom:24px;
+  box-shadow:0 10px 25px -5px rgba(0,0,0,.05), 0 8px 10px -6px rgba(0,0,0,.01);
+}
+.panel-title-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--navy);margin-bottom:8px;display:block;font-weight:700;}
+
+label{display:block;font-size:13.5px;font-weight:600;color:var(--ink);margin:16px 0 8px;font-family:'Outfit', sans-serif;}
+textarea,input[type=text],input[type=search],select{
+  width:100%;padding:12px 16px;border:1px solid #cbd5e1;border-radius:8px;
+  font-family:'Inter', sans-serif;font-size:15px;background:var(--white);color:var(--ink);
+  transition: all 0.2s ease;
+}
+textarea{min-height:110px;resize:vertical;}
+textarea:focus,input:focus,select:focus{outline:none; border-color:var(--navy); box-shadow: 0 0 0 3px rgba(6,3,141,0.1);}
+
+.btn{
+  display:inline-block;background:var(--navy);color:var(--white);border:none;
+  padding:12px 24px;border-radius:8px;font-weight:600;font-size:15px;
+  font-family:'Outfit', sans-serif; letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(6,3,141,0.2);
+}
+.btn:hover{background:#04025c; transform: translateY(-2px); box-shadow: 0 6px 8px -1px rgba(6,3,141,0.3);}
+.btn.secondary{background:transparent;color:var(--navy);border:2px solid var(--navy);box-shadow:none;}
+.btn.secondary:hover{background:var(--navy);color:var(--white);transform: translateY(-1px);}
+.btn.green{background:var(--green);box-shadow: 0 4px 6px -1px rgba(4,106,56,0.2);}
+.btn.green:hover{background:#034d28;box-shadow: 0 6px 8px -1px rgba(4,106,56,0.3);}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
+
+#map-picker{height:280px;border:2px solid var(--line);margin-top:8px;border-radius:8px;z-index: 10;}
+.hint{font-size:12.5px;color:var(--ink-soft);margin-top:6px;}
+
+.flash{padding:14px 20px;border-left:4px solid var(--navy);background:#e8eaf6;font-size:14.5px;margin-bottom:20px;border-radius: 0 8px 8px 0; font-weight:500;}
+.flash.success{border-color:var(--green);background:#e6f4ea;color:#0d532a;}
+.flash.error{border-color:var(--saffron);background:#fce8e6;color:#c5221f;}
+.flash.info{border-color:var(--navy);background:#e8eaf6;}
+
+.stamp{
+  display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;
+  padding:4px 10px;border-radius:6px;letter-spacing:.5px;border:1px solid currentColor;
+}
+.stamp.Open{color:var(--navy);background:#e8eaf6;border-color:#c7ceeb;}
+.stamp.Escalated{color:var(--saffron);background:#fff3e0;border-color:#ffe0b2;}
+.stamp.Resolved-Pending-Confirmation{color:var(--green);background:#e8f5e9;border-color:#c8e6c9;}
+.stamp.Closed{color:#475569;background:#f1f5f9;border-color:#cbd5e1;}
+.stamp.Critical-Overdue{color:var(--white);background:#DC2626;border-color:#DC2626;}
+
+.ref-chip{font-family:'JetBrains Mono',monospace;background:var(--navy);color:var(--white);padding:4px 10px;border-radius:6px;font-size:12.5px;letter-spacing:1px;font-weight:700;}
+
+.complaint-row{
+  display:flex;justify-content:space-between;gap:16px;align-items:flex-start;
+  padding:18px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+}
+.complaint-row:hover{background: rgba(255,255,255,0.9); box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-bottom-color:transparent;}
+.complaint-row:last-child{border-bottom:none;}
+.complaint-main{flex:1;min-width:240px;}
+.complaint-meta{font-size:12.5px;color:var(--ink-soft);margin-top:6px;font-weight:500;}
+.complaint-side{display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+@media(max-width:760px){.grid2{grid-template-columns:1fr;}}
+
+.severity{font-weight:800; font-family:'Outfit', sans-serif;}
+.sev-Critical{color:#DC2626;}
+.sev-High{color:#d94a0d;}
+.sev-Medium{color:#D97706;}
+.sev-Low{color:var(--green);}
+
+table{width:100%;border-collapse:separate; border-spacing: 0; font-size:14px;}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);}
+th{font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-soft);background:rgba(0,0,0,0.02);font-weight:700;}
+th:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+th:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+
+.filters{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+.filters select,.filters input{width:auto;flex:1;min-width:160px; font-weight:500;}
+
+.history-item{display:flex;gap:14px;padding:12px 0;border-bottom:1px dashed var(--line);font-size:14px;}
+.history-item:last-child{border-bottom:none;}
+.history-dot{width:10px;height:10px;border-radius:50%;background:var(--saffron);margin-top:6px;flex-shrink:0;box-shadow:0 0 0 3px rgba(255,103,31,0.2);}
+.response-item{background:rgba(255,255,255,0.7);border-left:4px solid var(--green);padding:14px 18px;margin-bottom:12px;font-size:14.5px;border-radius: 0 8px 8px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+.response-item.resolution{border-color:var(--navy); background: #f8fafc;}
+
+footer{max-width:1080px;margin:0 auto;padding:24px 32px 40px;font-size:13px;color:var(--ink-soft);border-top:1px solid var(--line);text-align:center;background:rgba(255,255,255,0.7);backdrop-filter:blur(8px);border-radius:16px 16px 0 0;font-weight:500;}
+.empty-state{padding:48px 20px;text-align:center;color:var(--ink-soft);font-weight:500;background:rgba(0,0,0,0.015);border-radius:12px; border: 2px dashed var(--line);}
+.two-col-form{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;}
+@media(max-width:700px){.two-col-form{grid-template-columns:1fr;}}
+.classify-hint{margin-top:10px;font-size:13px;color:var(--navy);font-family:'JetBrains Mono',monospace;min-height:18px;font-weight:600;}
+
+/* Profile list hover effect */
+.profile-item { padding:14px; border-bottom:1px solid var(--line); display:flex; flex-direction:column; gap:8px; transition: background 0.2s ease; border-radius:6px; margin-bottom:4px; }
+.profile-item:hover { background: rgba(0,0,0,0.03); }
+</style>
+</head>
+<body>
+
+<!-- Ashoka Chakra Center Watermark -->
+<div style="position:fixed; top:0; left:0; width:100vw; height:100vh; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:-1; overflow:hidden;" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style="width:40vw; height:40vw; max-width:450px; color:#06038D; opacity:0.04;">
+        <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="1"/>
+        <circle cx="50" cy="50" r="6" fill="currentColor"/>
+        <g stroke="currentColor" stroke-width="1.2">
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(0 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(15 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(30 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(45 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(60 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(75 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(90 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(105 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(120 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(135 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(150 50 50)" />
+            <line x1="50" y1="5" x2="50" y2="95" transform="rotate(165 50 50)" />
+        </g>
+    </svg>
+</div>
+
+<div class="masthead">
+  <div class="masthead-inner">
+    <div class="title">
+      <div class="seal-mark">JPS</div>
+      <div>
+        <h1>Jan Prashasan Setu</h1>
+        <div class="sub">People's Administration Bridge · Grievance Redressal</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:20px; align-items:center;">
+      <div class="dateline" id="dateline"></div>
+      
+      <!-- Profile / My Complaints Widget -->
+      <div style="position:relative;">
+        <button id="my-profile-btn" class="btn secondary" style="border-color:rgba(255,255,255,0.5); color:white; padding:6px 12px; font-size:13px; background:rgba(0,0,0,0.1); transition:all 0.3s;">
+          👤 My Complaints <span id="my-complaints-badge" style="background:var(--navy); color:white; border-radius:50%; padding:2px 6px; font-size:11px; margin-left:4px; display:none; transition:all 0.3s;">0</span>
+        </button>
+        
+        <!-- WIDER DROPDOWN -->
+        <div id="my-profile-dropdown" style="display:none; position:absolute; top:110%; right:0; background:white; color:var(--ink); width:360px; border-radius:12px; box-shadow:0 12px 35px rgba(0,0,0,0.25); padding:16px; border:1px solid var(--line); z-index:100;">
+          <div style="display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid var(--line); margin-bottom:12px; padding-bottom:10px;">
+            <h4 style="font-size:16px; margin:0; font-family:'Outfit', sans-serif;">My Submitted Complaints</h4>
+          </div>
+          <div id="my-complaints-list" style="max-height:360px; overflow-y:auto; font-size:13px;">
+            <div style="color:var(--ink-soft); font-style:italic;">No complaints submitted from this device yet.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<nav class="tabs">
+  <button class="active" data-view="file">File a Complaint</button>
+  <button data-view="track">Track a Complaint</button>
+  <button data-view="board">Public Register</button>
+  <button data-view="officer">Officer Portal</button>
+</nav>
+
+<main>
+
+<!-- ============ FILE ============ -->
+<section class="view active" id="view-file">
+  <div class="panel">
+    <span class="eyebrow">Citizen Intake</span>
+    <h2>Describe the civic issue</h2>
+    <p style="color:var(--ink-soft);font-size:15px; margin-bottom:24px;">Write in your own words, in English or Hindi/Hinglish. The system reads your description, works out which department is responsible, checks whether someone nearby has already reported the same issue, and gives you a tracking code.</p>
+    
+    <div id="flash-file"></div>
+    
+    <label for="desc">What's the problem?</label>
+    <div style="position:relative;">
+      <textarea id="desc" placeholder="e.g. Bijli ka transformer school ke paas spark kar raha hai, bahut khatarnak hai" style="padding-right:52px;"></textarea>
+      <button type="button" id="voice-input-btn" title="Speak your complaint" style="position:absolute; right:10px; bottom:10px; width:38px; height:38px; border-radius:50%; border:2px solid var(--navy); background:var(--white); color:var(--navy); font-size:16px; display:flex; align-items:center; justify-content:center; padding:0; box-shadow:0 2px 6px rgba(0,0,0,.08); transition: all 0.2s ease;">🎤</button>
+    </div>
+    <div class="hint" id="voice-status" style="margin-top:6px;"></div>
+    <div class="classify-hint" id="classify-hint"></div>
+
+    <label style="margin-top:24px;">Attach a live photo of the problem <span style="color:#DC2626;">(required)</span></label>
+    <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+      <label for="photo-input" class="btn secondary" style="margin:0; padding:10px 20px; font-size:14px;">📷 Take Live Photo</label>
+      <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none;">
+      <button type="button" class="btn secondary" id="photo-clear-btn" style="display:none; padding:10px 16px; font-size:13px; border-color:#DC2626; color:#DC2626;">Remove</button>
+      <img id="photo-preview" style="display:none; max-height:110px; border-radius:8px; border:1px solid var(--line); box-shadow:0 2px 6px rgba(0,0,0,.08);">
+    </div>
+    <div class="hint" id="photo-hint">A live photo is compulsory for every complaint — it opens your camera directly on a phone. Keep location tagging enabled in your camera app: we read the GPS coordinates embedded in the photo to pin your location below, so this helps officers verify the issue and speeds up resolution.</div>
+
+    <label style="margin-top:24px;">Location <span style="color:#DC2626;">(auto-detected from photo)</span></label>
+    <div id="map-picker"></div>
+    <div class="hint">Location is read automatically from the GPS data embedded in your photo — there is no manual pin option, so every report is tied to where the photo was actually taken. <span id="latlon-readout" class="mono" style="font-weight:700; color:var(--navy); margin-left:8px;"></span></div>
+    <div id="geo-status" class="hint" style="margin-top:4px;"></div>
+
+    <div class="two-col-form" style="margin-top:24px;">
+      <div>
+        <label for="address">Landmark / Address (optional)</label>
+        <input type="text" id="address" placeholder="e.g. MG Road flyover, Bengaluru">
+      </div>
+      <div>
+        <label for="contact">Contact (optional, kept private)</label>
+        <input type="text" id="contact" placeholder="Phone or email — for updates only">
+      </div>
+    </div>
+
+    <button class="btn" style="margin-top:32px; width:100%; font-size:16px; padding:14px;" id="submit-btn">Process via AI & Submit</button>
+  </div>
+</section>
+
+<!-- ============ TRACK ============ -->
+<section class="view" id="view-track">
+  <div class="panel">
+    <span class="eyebrow">Citizen Lookup</span>
+    <h2>Track your complaint</h2>
+    <div style="display:flex;gap:12px;margin-top:16px;">
+      <input type="text" id="track-ref" placeholder="Enter your reference code (e.g. JPS-A1B2C3)" style="flex:1; font-family:'JetBrains Mono', monospace; font-size:16px; letter-spacing:1px;">
+      <button class="btn" id="track-btn" style="padding:0 32px;">Look up</button>
+    </div>
+    <div id="track-result" style="margin-top:28px;"></div>
+  </div>
+</section>
+
+<!-- ============ BOARD ============ -->
+<section class="view" id="view-board">
+  <div class="panel">
+    <span class="eyebrow">Identity-Free Ledger</span>
+    <h2>Live Grievance Register</h2>
+    <p style="color:var(--ink-soft);font-size:15px; margin-bottom:24px;">Every complaint and official response is permanently browsable for transparency and accountability. No citizen identity is ever shown here.</p>
+    
+    <div class="filters">
+      <input type="search" id="board-q" placeholder="Search keywords...">
+      <select id="board-dept"><option value="">All Departments</option></select>
+      <select id="board-status">
+        <option value="">All Statuses</option>
+        <option>Open</option><option>Escalated</option><option>Critical-Overdue</option>
+        <option>Resolved-Pending-Confirmation</option><option>Closed</option>
+      </select>
+    </div>
+    <div id="board-list"></div>
+  </div>
+</section>
+
+<!-- ============ OFFICER ============ -->
+<section class="view" id="view-officer">
+  <div class="panel" id="officer-login-panel">
+    <span class="eyebrow">Authenticated Access</span>
+    <h2>Officer Portal Login</h2>
+    <div id="flash-officer"></div>
+    <div class="grid2" style="align-items:end; margin-top:24px;">
+      <div><label for="off-user">Username</label><input type="text" id="off-user" placeholder="public-works-roads-L1" class="mono"></div>
+      <div><label for="off-pass">Password</label><input type="text" id="off-pass" placeholder="password123" class="mono"></div>
+    </div>
+    <button class="btn" style="margin-top:24px;" id="off-login-btn">Secure Login</button>
+    
+    <div style="margin-top:40px; padding-top:24px; border-top:1px solid var(--line);">
+      <h4 style="font-family:'Inter', sans-serif; font-size:14px; color:var(--ink-soft);">Demo Credentials (password123)</h4>
+      <table style="margin-top:12px;">
+        <thead><tr><th>Department</th><th>Usernames (L1/L2/L3)</th></tr></thead>
+        <tbody id="officer-roster"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel" id="officer-dashboard-panel" style="display:none;">
+    <div class="panel-title-row" style="margin-bottom:24px; border-bottom:1px solid var(--line); padding-bottom:16px;">
+      <div>
+        <span class="eyebrow" id="off-dept-name" style="font-size:13px; color:var(--saffron);"></span>
+        <h2 style="margin:0;">Officer Dashboard <span id="off-level-tag"></span></h2>
+      </div>
+      <button class="btn secondary" id="off-logout-btn">Log out</button>
+    </div>
+    <div id="officer-queue"></div>
+  </div>
+
+  <div class="panel" id="officer-detail-panel" style="display:none;">
+    <button class="btn secondary" id="officer-back-btn" style="margin-bottom:24px;">← Back to Queue</button>
+    <div id="officer-detail-body"></div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <strong style="color:var(--navy); font-family:'Outfit', sans-serif; font-size:15px;">Smart India Hackathon 2026 Prototype</strong><br><br>
+  Jan Prashasan Setu runs entirely in this browser tab. Refreshing resets the register. Escalation sweeps run automatically every 20 seconds against compressed demo SLAs (seconds instead of hours).
+  <br>
+  <button class="btn secondary" id="reset-demo-btn" style="margin-top:20px;padding:8px 20px;font-size:13px;">Reset & Reseed Demo Data</button>
+</footer>
+
+<script>
+/* =====================================================================
+   DEPARTMENTS / CLASSIFIER  (ported from nlp.py)
+   ===================================================================== */
+const CATEGORY_TO_DEPARTMENT = {
+  "Roads & Infrastructure": "Public Works (Roads)",
+  "Water Supply": "Water Supply Board",
+  "Electricity": "Electricity Board",
+  "Sanitation & Garbage": "Municipal Sanitation",
+  "Street Lighting": "Electricity Board",
+  "Public Health": "Health Department",
+  "Public Safety": "Police / Public Safety",
+  "Corruption / Misconduct": "Vigilance / Anti-Corruption",
+  "Other": "General Administration",
+};
+const DEPARTMENTS = [...new Set(Object.values(CATEGORY_TO_DEPARTMENT))];
+function slug(name){ return name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+
+const HIGH_SEV = ["accident","fire","collapse","collapsed","spark","sparking","electrocut","life","death","died","danger","dangerous","hazard","outbreak","disease","attack","unsafe","children","school","hospital","bribe","gas leak","exposed wire","live wire","flood","drowning","emergency"];
+const MED_SEV = ["weeks","days","overflow","leak","leaking","broken","not working","no water","no power","outage","garbage","smell","mosquito"];
+const CATEGORY_KEYWORDS = {
+  "Roads & Infrastructure": ["pothole","sadak","footpath","gaddha","speed breaker","road collapse","road is broken","broken road","cracked road","damaged road"],
+  "Water Supply": ["water","paani","pipeline","tanker","tap","drinking water"],
+  "Electricity": ["power","electric","bijli","transformer","wire","voltage","current"],
+  "Sanitation & Garbage": ["garbage","kachra","drain","drainage","sewage","toilet","waste"],
+  "Street Lighting": ["street light","streetlight","lamp post","street lamp"],
+  "Public Health": ["hospital","clinic","doctor","disease","dengue","mosquito","adulterat"],
+  "Public Safety": ["traffic","signal","fire","unsafe","attack","stray dog","eve teasing","harassment"],
+  "Corruption / Misconduct": ["bribe","corrupt","illegal money","demanding money"],
+};
+function keywordVote(textLower){
+  let scores = {}; for(const c in CATEGORY_KEYWORDS) scores[c]=0;
+  for(const cat in CATEGORY_KEYWORDS){
+    for(const kw of CATEGORY_KEYWORDS[cat]) if(textLower.includes(kw)) scores[cat]++;
+  }
+  let top = Math.max(...Object.values(scores));
+  if(top===0) return null;
+  return Object.keys(scores).find(c=>scores[c]===top);
+}
+function severityOf(textLower){
+  let score=0;
+  for(const kw of HIGH_SEV) if(textLower.includes(kw)) score+=3;
+  for(const kw of MED_SEV) if(textLower.includes(kw)) score+=1;
+  if(score>=5) return "Critical";
+  if(score>=3) return "High";
+  if(score>=1) return "Medium";
+  return "Low";
+}
+function classify(text){
+  const textLower = text.toLowerCase();
+  const kwCat = keywordVote(textLower);
+  const finalCategory = kwCat || "Other";
+  const severity = severityOf(textLower);
+  return {
+    category: finalCategory,
+    department: CATEGORY_TO_DEPARTMENT[finalCategory],
+    severity,
+    needs_human_review: !kwCat,
+  };
+}
+
+/* =====================================================================
+   DEDUP  (ported from dedup.py)
+   ===================================================================== */
+const RADIUS_METERS = 150.0;
+const TEXT_SIM_THRESHOLD = 0.22;
+const MIN_SHARED_TOKENS = 2;
+const STOPWORDS = new Set(["a","an","the","is","are","was","were","am","be","been","being","this","that","these","those","there","here","my","our","your","i","we","you","he","she","it","they","them","me","us","to","of","in","on","at","for","with","and","or","but","so","very","please","near","outside","around","again","also","not","has","have","had","do","does","did","will","would","can","could","hai","hain","ka","ki","ke","se","me","mein","ho","raha","rahi"]);
+function tokenize(text){
+  const words = (text.toLowerCase().match(/[a-z0-9]+/g)||[]);
+  return new Set(words.filter(w=>!STOPWORDS.has(w) && w.length>1));
+}
+function jaccard(a,b){
+  const A=tokenize(a), B=tokenize(b);
+  if(A.size===0||B.size===0) return [0,0];
+  const shared=[...A].filter(x=>B.has(x));
+  const union=new Set([...A,...B]);
+  return [shared.length/union.size, shared.length];
+}
+function haversine(lat1,lon1,lat2,lon2){
+  const R=6371000, toRad=d=>d*Math.PI/180;
+  const dphi=toRad(lat2-lat1), dl=toRad(lon2-lon1);
+  const a=Math.sin(dphi/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dl/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+function findDuplicate(newText,lat,lon,candidates){
+  if(lat==null||lon==null||!candidates.length) return null;
+  const geoClose = candidates.filter(c=>c.lat!=null && c.lon!=null && haversine(lat,lon,c.lat,c.lon)<=RADIUS_METERS);
+  let best=null, bestSim=0;
+  for(const c of geoClose){
+    const [sim,shared]=jaccard(newText,c.text);
+    if(sim>=TEXT_SIM_THRESHOLD && shared>=MIN_SHARED_TOKENS && sim>bestSim){ best=c; bestSim=sim; }
+  }
+  return best;
+}
+
+/* =====================================================================
+   "DATABASE"  (in-memory, ported from db.py concepts)
+   ===================================================================== */
+/* Response/resolution timelines are driven directly by severity: the
+   more severe the problem, the shorter the deadline. Each escalation
+   level tightens the remaining time further, since an escalated
+   complaint is by definition more urgent. Base seconds below are a
+   compressed demo scale (seconds stand in for hours/days — see the
+   human-readable SEVERITY_SLA_LABEL table used for citizen-facing text). */
+const SEVERITY_SLA = {
+  Critical: { resp: 20,  res: 45  },
+  High:     { resp: 40,  res: 80  },
+  Medium:   { resp: 70,  res: 130 },
+  Low:      { resp: 100, res: 190 },
+};
+const LEVEL_TIGHTEN = [1, 0.7, 0.5]; // deadlines tighten further with each escalation level
+const SEVERITY_RANK = { Critical: 0, High: 1, Medium: 2, Low: 3 }; // for priority sorting
+const SEVERITY_SLA_LABEL = { // real-world targets shown to citizens/officers
+  Critical: { resp: "2 hours",  res: "8 hours"  },
+  High:     { resp: "8 hours",  res: "24 hours" },
+  Medium:   { resp: "24 hours", res: "3 days"   },
+  Low:      { resp: "48 hours", res: "7 days"   },
+};
+function slaLabel(severity, kind){
+  return (SEVERITY_SLA_LABEL[severity] && SEVERITY_SLA_LABEL[severity][kind]) || '—';
+}
+const LEVEL_NAMES = ["Ward / Local Officer","District Officer","State Officer"];
+
+let complaints = [];
+let nextId = 1;
+
+function refCode(){
+  return "JPS-" + Math.random().toString(36).substring(2,8).toUpperCase();
+}
+function secretKey(){
+  return Math.random().toString(36).substring(2,10);
+}
+function setDeadlines(c){
+  const sla = SEVERITY_SLA[c.severity];
+  const tighten = LEVEL_TIGHTEN[c.level];
+  const now = Date.now();
+  c.response_deadline = now + sla.resp*1000*tighten;
+  c.resolution_deadline = now + sla.res*1000*tighten;
+}
+function addHistory(c, actor, action, note){
+  c.history.push({ts:Date.now(), actor, action, note});
+}
+function createComplaint({text,lat,lon,address,contact,photo}){
+  const cls = classify(text);
+  const dup = findDuplicate(text,lat,lon, complaints.filter(c=>
+    c.department===cls.department && c.category===cls.category &&
+    !["Closed"].includes(c.status)
+  ));
+  if(dup){
+    dup.support_count++;
+    if(photo && !dup.photo) dup.photo = photo;
+    addHistory(dup,"citizen","Duplicate merged",`New report merged: "${text.slice(0,100)}"`);
+    return {duplicate:true, complaint:dup};
+  }
+  const c = {
+    id: nextId++,
+    anon_ref: refCode(),
+    secret_key: secretKey(),
+    contact,
+    text, category:cls.category, department:cls.department, severity:cls.severity,
+    needs_human_review: cls.needs_human_review,
+    lat, lon, address, photo: photo || null,
+    status:"Open", level:0, support_count:1,
+    responded_at:null, resolved_at:null,
+    history:[], responses:[],
+    created_at: Date.now(),
+  };
+  setDeadlines(c);
+  addHistory(c,"system","Registered",`Routed to ${c.department} (category: ${c.category}, severity: ${c.severity})`);
+  complaints.push(c);
+  return {duplicate:false, complaint:c};
+}
+function respond(c, officer, message){
+  c.responded_at = Date.now();
+  c.responses.push({type:"response", by:officer, message, at:Date.now()});
+  addHistory(c, officer, "Responded", message);
+}
+function resolve(c, officer, message){
+  c.status = "Resolved-Pending-Confirmation";
+  c.resolved_at = Date.now();
+  c.responses.push({type:"resolution", by:officer, message, at:Date.now()});
+  addHistory(c, officer, "Marked Resolved", message + " (awaiting citizen confirmation)");
+}
+function escalate(c, reason){
+  if(c.level < 2){
+    c.level++;
+    c.status = "Escalated";
+  } else {
+    c.status = "Critical-Overdue";
+  }
+  setDeadlines(c);
+  addHistory(c,"system","Escalated", reason + ` → now with ${LEVEL_NAMES[c.level]}`);
+}
+function confirmResolution(c, satisfied, comment){
+  if(satisfied){
+    c.status = "Closed";
+    addHistory(c,"citizen","Confirmed — Closed", comment||"Citizen confirmed the issue is resolved.");
+  } else {
+    c.status = "Open";
+    addHistory(c,"citizen","Reopened", comment||"Citizen reported the issue is not actually resolved.");
+    escalate(c,"Reopened by citizen after unsatisfactory resolution");
+  }
+}
+function runEscalationSweep(){
+  const now = Date.now();
+  let n=0;
+  for(const c of complaints){
+    if(["Resolved-Pending-Confirmation","Closed","Critical-Overdue"].includes(c.status)) continue;
+    if(c.resolution_deadline && now > c.resolution_deadline){
+      escalate(c,"Resolution SLA deadline missed"); n++; continue;
+    }
+    if(c.response_deadline && now > c.response_deadline && !c.responded_at){
+      escalate(c,"Response SLA deadline missed (no acknowledgement)"); n++; continue;
+    }
+  }
+  return n;
+}
+
+let officers = [];
+DEPARTMENTS.forEach(dep=>{
+  for(let lvl=0; lvl<3; lvl++){
+    officers.push({username:`${slug(dep)}-L${lvl+1}`, password:"password123", department:dep, level:lvl});
+  }
+});
+let currentOfficer = null;
+
+/* =====================================================================
+   SEED DEMO DATA (ported from seed_demo.py)
+   ===================================================================== */
+function seedDemo(){
+  complaints = []; nextId = 1;
+  const DEMO = [
+    ["Massive pothole on MG Road near the flyover, two accidents already this week", 12.9716, 77.5946, "MG Road flyover, Bengaluru", "escalate"],
+    ["No water supply in Sector 21 for 4 days now, tankers also not coming", 28.5679, 77.3261, "Sector 21, Noida", "open"],
+    ["Streetlights near the community park have been off for a month", 19.0760, 72.8777, "Community Park, Mumbai", "resolved"],
+    ["Garbage not collected on Lake Road for two weeks, terrible smell", 13.0827, 80.2707, "Lake Road, Chennai", "closed"],
+    ["Transformer sparking near the government school, very dangerous for children", 22.5726, 88.3639, "Govt School Road, Kolkata", "open"],
+  ];
+  for(const [text,lat,lon,addr,walk] of DEMO){
+    const {complaint:c} = createComplaint({text,lat,lon,address:addr,contact:null});
+    if(walk==="escalate"){ escalate(c,"Demo: simulated missed SLA for illustration"); }
+    else if(walk==="resolved"){
+      respond(c,"demo-officer","Team dispatched to inspect.");
+      resolve(c,"demo-officer","New light fixtures installed and tested.");
+    } else if(walk==="closed"){
+      respond(c,"demo-officer","Sanitation crew assigned.");
+      resolve(c,"demo-officer","Backlog cleared, area cleaned.");
+      confirmResolution(c,true,"Confirmed clean now, thank you.");
+    }
+  }
+}
+seedDemo();
+setInterval(()=>{ const n=runEscalationSweep(); if(n>0) renderAll(); }, 20000);
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+function fmtTime(ts){
+  const d = new Date(ts);
+  return d.toLocaleString(undefined,{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+}
+function statusLabel(s){ return s.replace(/-/g,' '); }
+function flash(container, msg, kind){
+  container.innerHTML = `<div class="flash ${kind}">${msg}</div>`;
+  setTimeout(()=>{ if(container.firstChild) container.innerHTML=''; }, 9000);
+}
+
+/* ---- tabs ---- */
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+    
+    if(btn.dataset.view==='file' && map) {
+        setTimeout(() => map.invalidateSize(), 150);
+    }
+    if(btn.dataset.view==='board') renderBoard();
+  });
+});
+
+/* ---- dateline ---- */
+document.getElementById('dateline').textContent = new Date().toLocaleDateString(undefined,{weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+/* ---- map display (view-only — pin is set exclusively via the photo's EXIF geotag) ---- */
+let pickedLat=null, pickedLon=null, marker=null;
+const map = L.map('map-picker').setView([22.9734, 78.6569], 4.6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap'}).addTo(map);
+mapPickerStyleAsReadOnly();
+function mapPickerStyleAsReadOnly(){
+  const el = document.getElementById('map-picker');
+  el.style.cursor = 'default';
+}
+
+/* ---- photo capture (compulsory) + geotag extraction from EXIF ---- */
+let pickedPhoto = null; // data URL string
+const photoInput = document.getElementById('photo-input');
+const photoPreview = document.getElementById('photo-preview');
+const photoClearBtn = document.getElementById('photo-clear-btn');
+const photoHintEl = document.getElementById('photo-hint');
+const geoStatusEl = document.getElementById('geo-status');
+
+function dmsToDecimal(dms, ref){
+  const decimal = dms[0] + dms[1]/60 + dms[2]/3600;
+  return (ref==='S' || ref==='W') ? -decimal : decimal;
+}
+function placePin(lat, lon, label){
+  pickedLat = lat; pickedLon = lon;
+  if(marker) marker.remove();
+  marker = L.marker([lat, lon]).addTo(map);
+  map.setView([lat, lon], 16);
+  document.getElementById('latlon-readout').textContent = `Pinned: [${lat.toFixed(4)}, ${lon.toFixed(4)}]${label ? ' · ' + label : ''}`;
+}
+function readPhotoGeotag(file){
+  geoStatusEl.textContent = 'Reading location data embedded in the photo…';
+  if(typeof EXIF === 'undefined'){
+    geoStatusEl.textContent = 'Could not read photo location data (EXIF reader unavailable).';
+    return;
+  }
+  EXIF.getData(file, function(){
+    const latDms = EXIF.getTag(this, 'GPSLatitude');
+    const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
+    const lonDms = EXIF.getTag(this, 'GPSLongitude');
+    const lonRef = EXIF.getTag(this, 'GPSLongitudeRef');
+    if(latDms && lonDms){
+      const lat = dmsToDecimal(latDms, latRef);
+      const lon = dmsToDecimal(lonDms, lonRef);
+      placePin(lat, lon, 'From photo geotag');
+      geoStatusEl.textContent = "Location pinned automatically from the photo's GPS data.";
+    } else {
+      geoStatusEl.textContent = 'This photo has no embedded GPS data. Please enable location tagging in your camera app and attach a geotagged photo.';
+    }
+  });
+}
+photoInput.addEventListener('change', ()=>{
+  const file = photoInput.files && photoInput.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    pickedPhoto = e.target.result;
+    photoPreview.src = pickedPhoto;
+    photoPreview.style.display = 'inline-block';
+    photoClearBtn.style.display = 'inline-block';
+    photoHintEl.textContent = 'Photo attached ✓';
+    photoHintEl.style.color = 'var(--green)';
+  };
+  reader.readAsDataURL(file);
+  readPhotoGeotag(file);
+});
+photoClearBtn.addEventListener('click', ()=>{
+  resetPhotoField();
+});
+function resetPhotoField(){
+  pickedPhoto = null;
+  photoInput.value = '';
+  photoPreview.src = '';
+  photoPreview.style.display = 'none';
+  photoClearBtn.style.display = 'none';
+  photoHintEl.textContent = "A live photo is compulsory for every complaint — it opens your camera directly on a phone. Keep location tagging enabled in your camera app: we read the GPS coordinates embedded in the photo to pin your location below, so this helps officers verify the issue and speeds up resolution.";
+  photoHintEl.style.color = '';
+  pickedLat = null; pickedLon = null;
+  if(marker){ marker.remove(); marker = null; }
+  document.getElementById('latlon-readout').textContent = '';
+  geoStatusEl.textContent = '';
+}
+
+/* ---- voice-to-text for problem description ---- */
+(function(){
+  const voiceBtn = document.getElementById('voice-input-btn');
+  const voiceStatus = document.getElementById('voice-status');
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognition){
+    voiceBtn.disabled = true;
+    voiceBtn.style.opacity = '.4';
+    voiceBtn.style.cursor = 'not-allowed';
+    voiceBtn.title = 'Voice input is not supported in this browser';
+    return;
+  }
+  const recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.lang = 'en-IN';
+  let listening = false;
+
+  recognition.addEventListener('start', ()=>{
+    listening = true;
+    voiceBtn.style.background = '#DC2626';
+    voiceBtn.style.borderColor = '#DC2626';
+    voiceBtn.style.color = 'white';
+    voiceStatus.textContent = 'Listening… speak your complaint now.';
+  });
+  recognition.addEventListener('result', (e)=>{
+    let transcript = '';
+    for(let i=0;i<e.results.length;i++) transcript += e.results[i][0].transcript;
+    descEl.value = transcript;
+    descEl.dispatchEvent(new Event('input'));
+  });
+  recognition.addEventListener('error', (e)=>{
+    voiceStatus.textContent = 'Voice input error: ' + e.error + '. You can type instead.';
+  });
+  function stopListeningUI(){
+    listening = false;
+    voiceBtn.style.background = 'var(--white)';
+    voiceBtn.style.borderColor = 'var(--navy)';
+    voiceBtn.style.color = 'var(--navy)';
+    if(voiceStatus.textContent.startsWith('Listening')) voiceStatus.textContent = 'Stopped listening.';
+  }
+  recognition.addEventListener('end', stopListeningUI);
+
+  voiceBtn.addEventListener('click', ()=>{
+    if(listening){ recognition.stop(); return; }
+    try{ recognition.start(); }
+    catch(err){ voiceStatus.textContent = 'Could not start voice input: ' + err.message; }
+  });
+})();
+
+/* ---- live classify hint ---- */
+const descEl = document.getElementById('desc');
+let classifyTimer;
+descEl.addEventListener('input', ()=>{
+  clearTimeout(classifyTimer);
+  classifyTimer = setTimeout(()=>{
+    const t = descEl.value.trim();
+    const hintEl = document.getElementById('classify-hint');
+    if(!t){ hintEl.textContent=''; return; }
+    const r = classify(t);
+    hintEl.innerHTML = `AI PREDICTION: <span style="color:var(--ink);">${r.department}</span>  ·  SEVERITY: <span style="color:var(--ink);">${r.severity}</span>${r.needs_human_review ? ' <span style="color:var(--saffron);">(Low Confidence - Flagged for Review)</span>':''}  ·  TARGET RESPONSE: <span style="color:var(--ink);">${slaLabel(r.severity,'resp')}</span>  ·  TARGET RESOLUTION: <span style="color:var(--ink);">${slaLabel(r.severity,'res')}</span>`;
+  }, 350);
+});
+
+/* ---- My Profile / Local Storage Tracker (UPDATED FOR INTERACTIVITY) ---- */
+let myComplaints = JSON.parse(localStorage.getItem('my_jps_complaints') || '[]');
+
+function renderMyProfile() {
+  const badge = document.getElementById('my-complaints-badge');
+  const list = document.getElementById('my-complaints-list');
+  
+  // Clean up any refs that might have been lost if demo data was reset
+  const activeMyComplaints = myComplaints.filter(ref => complaints.find(c => c.anon_ref === ref));
+  
+  // Count how many complaints require the user to confirm resolution
+  const needsActionCount = activeMyComplaints.filter(ref => {
+    const c = complaints.find(x => x.anon_ref === ref);
+    return c.status === 'Resolved-Pending-Confirmation';
+  }).length;
+
+  if (activeMyComplaints.length > 0) {
+    badge.style.display = 'inline-block';
+    
+    // Interactive Notification Update
+    if (needsActionCount > 0) {
+      badge.innerHTML = `⚠️ ${activeMyComplaints.length}`;
+      badge.style.background = '#DC2626'; // Alert Red
+    } else {
+      badge.textContent = activeMyComplaints.length;
+      badge.style.background = 'var(--navy)';
+    }
+    
+    list.innerHTML = activeMyComplaints.map(ref => {
+      const c = complaints.find(x => x.anon_ref === ref);
+      const isResolved = c.status === 'Resolved-Pending-Confirmation';
+      // Create a short preview of what they reported
+      const textSnippet = c.text.length > 55 ? c.text.slice(0, 55) + '...' : c.text;
+      
+      return `
+        <div class="profile-item">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div style="padding-right:12px;">
+              <strong class="mono" style="color:var(--navy); font-size:14px;">${c.anon_ref}</strong><br>
+              <span style="font-size:12.5px; color:var(--ink-soft); line-height:1.3; display:inline-block; margin-top:4px;">"${textSnippet}"</span>
+            </div>
+            <span class="stamp ${c.status}" style="font-size:10px; padding:2px 6px; white-space:nowrap;">${statusLabel(c.status)}</span>
+          </div>
+          
+          ${isResolved ? `
+            <div style="background:#e8f5e9; padding:10px 12px; border-radius:8px; border:1px solid #c8e6c9; display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+              <span style="font-size:12px; color:var(--green); font-weight:600;">Action Required: Verify Fix</span>
+              <button class="btn green" style="padding:6px 14px; font-size:12px; box-shadow:none;" onclick="quickTrack('${c.anon_ref}')">Verify Now</button>
+            </div>
+          ` : `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+              <span style="font-size:11px; color:var(--ink-soft); font-family:'JetBrains Mono', monospace;">Updated: ${new Date(c.history[c.history.length-1].ts).toLocaleDateString()}</span>
+              <button class="btn secondary" style="padding:6px 14px; font-size:12px;" onclick="quickTrack('${c.anon_ref}')">View Details</button>
+            </div>
+          `}
+        </div>`;
+    }).join('');
+  } else {
+    badge.style.display = 'none';
+    list.innerHTML = '<div style="color:var(--ink-soft); font-style:italic; padding:10px 0;">No active complaints from this device.</div>';
+  }
+}
+
+// Function to route from dropdown to track tab
+window.quickTrack = function(ref) {
+  document.getElementById('my-profile-dropdown').style.display = 'none';
+  document.querySelector('nav.tabs button[data-view="track"]').click();
+  document.getElementById('track-ref').value = ref;
+  doTrack();
+};
+
+// Dropdown toggle logic
+document.getElementById('my-profile-btn').addEventListener('click', (e) => {
+  const dd = document.getElementById('my-profile-dropdown');
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+  renderMyProfile(); // Refresh status when opening
+  e.stopPropagation();
+});
+document.addEventListener('click', () => {
+  const dd = document.getElementById('my-profile-dropdown');
+  if(dd) dd.style.display = 'none';
+});
+document.getElementById('my-profile-dropdown').addEventListener('click', e => e.stopPropagation());
+
+/* ---- submit complaint ---- */
+document.getElementById('submit-btn').addEventListener('click', ()=>{
+  const flashEl = document.getElementById('flash-file');
+  const text = descEl.value.trim();
+  if(!text){ flash(flashEl,"Please describe the problem before submitting.","error"); return; }
+  if(!pickedPhoto){ flash(flashEl,"A live photo of the problem is compulsory. Please attach one before submitting.","error"); return; }
+  if(pickedLat==null){ flash(flashEl,"We couldn't find location data in your photo. Please attach a geotagged photo (with location tagging enabled in your camera app) so we can route this correctly and avoid duplicates.","error"); return; }
+  const address = document.getElementById('address').value.trim();
+  const contact = document.getElementById('contact').value.trim() || null;
+  const {duplicate, complaint} = createComplaint({text, lat:pickedLat, lon:pickedLon, address, contact, photo:pickedPhoto});
+  if(duplicate){
+    flash(flashEl, `This looks like an existing reported issue nearby. We've added your report as additional support to complaint <span class="ref-chip">${complaint.anon_ref}</span> (now reported by ${complaint.support_count} citizens), which boosts its priority.`, "info");
+  } else {
+    // SAVE TO PROFILE:
+    myComplaints.push(complaint.anon_ref);
+    localStorage.setItem('my_jps_complaints', JSON.stringify(myComplaints));
+    renderMyProfile();
+    
+    flash(flashEl, `Complaint registered! Routed to <strong>${complaint.department}</strong> (Priority: ${complaint.severity}). Response due within <strong>${slaLabel(complaint.severity,'resp')}</strong>, resolution within <strong>${slaLabel(complaint.severity,'res')}</strong>. <br><br><strong>SAVE YOUR TRACKING CODE & SECRET KEY:</strong> <span class="mono bg-white px-2 py-1 rounded" style="color:var(--navy); font-size:16px;">${complaint.anon_ref} / ${complaint.secret_key}</span>`, "success");
+  }
+  descEl.value=''; document.getElementById('address').value=''; document.getElementById('contact').value='';
+  document.getElementById('classify-hint').textContent='';
+  document.getElementById('track-ref').value = complaint.anon_ref;
+  resetPhotoField();
+});
+
+/* ---- track ---- */
+function renderComplaintCard(c, opts={}){
+  const showConfirm = opts.showConfirm;
+  let html = `<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;align-items:baseline; margin-bottom:16px;">
+    <div><span class="ref-chip" style="font-size:15px; padding:6px 12px;">${c.anon_ref}</span> <span class="stamp ${c.status}" style="margin-left:12px; font-size:13px;">${statusLabel(c.status)}</span></div>
+    <div class="severity sev-${c.severity}" style="font-size:16px;">${c.severity} Priority</div>
+  </div>
+  <p style="margin:16px 0 10px; font-size:16px; color:var(--ink);">${c.text}</p>
+  <div class="complaint-meta" style="background:rgba(0,0,0,0.02); padding:12px; border-radius:8px; display:inline-block; border:1px solid var(--line);">
+    <strong>Dept:</strong> ${c.department} &nbsp;·&nbsp; <strong>Category:</strong> ${c.category} &nbsp;·&nbsp; <strong>Location:</strong> ${c.address||'Map Pin'} &nbsp;·&nbsp; <strong>Support:</strong> ${c.support_count} citizen${c.support_count>1?'s':''} &nbsp;·&nbsp; <strong>Level:</strong> ${LEVEL_NAMES[c.level]}
+  </div>
+  <div class="complaint-meta" style="margin-top:8px;">
+    <strong>Severity:</strong> <span class="severity sev-${c.severity}">${c.severity}</span> &nbsp;·&nbsp; <strong>Response due within:</strong> ${slaLabel(c.severity,'resp')} &nbsp;·&nbsp; <strong>Resolution due within:</strong> ${slaLabel(c.severity,'res')}
+  </div>
+  ${c.photo ? `<div style="margin-top:18px;"><img src="${c.photo}" alt="Attached photo evidence" style="max-width:100%; max-height:340px; border-radius:12px; border:1px solid var(--line); box-shadow:0 4px 10px rgba(0,0,0,.08);"></div>` : ''}`;
+  if(c.responses.length){
+    html += `<h4 style="margin-top:32px; font-size:18px;">Official Responses</h4>`;
+    for(const r of c.responses){
+      html += `<div class="response-item ${r.type}"><strong>${r.type==='resolution'?'Resolution':'Update'} from ${r.by}</strong> · <span style="color:var(--ink-soft); font-size:13px;">${fmtTime(r.at)}</span><br><span style="color:var(--ink); font-weight:500;">${r.message}</span></div>`;
+    }
+  }
+  html += `<h4 style="margin-top:32px; font-size:18px;">Audit Trail</h4><div style="background:rgba(255,255,255,0.5); padding:16px; border-radius:12px; border:1px solid var(--line);">`;
+  for(const h of c.history){
+    html += `<div class="history-item"><div class="history-dot"></div><div><strong>${h.action}</strong> — <span class="mono" style="font-size:12px; color:var(--ink-soft);">${fmtTime(h.ts)}</span><br><span style="color:var(--ink-soft)">${h.note}</span></div></div>`;
+  }
+  html += `</div>`;
+
+  if(showConfirm && c.status==='Resolved-Pending-Confirmation'){
+    html += `<div style="margin-top:32px;border-top:1px solid var(--line);padding-top:24px;">
+      <h4 style="color:var(--green); font-size:20px;">Confirm Resolution</h4>
+      <p style="margin-bottom:16px; color:var(--ink-soft);">The department has marked this as resolved. Please confirm to officially close the ticket.</p>
+      <label>Secret Key</label>
+      <input type="text" id="confirm-secret" placeholder="Enter your secret key to verify identity" class="mono">
+      <label>Comment (optional)</label>
+      <textarea id="confirm-comment" style="min-height:80px;"></textarea>
+      <div style="margin-top:16px;display:flex;gap:12px;">
+        <button class="btn green" id="confirm-yes">Yes, resolved — Close Ticket</button>
+        <button class="btn secondary" id="confirm-no" style="border-color:#DC2626; color:#DC2626;">Not fixed — Reopen Ticket</button>
+      </div>
+      <div id="confirm-flash" style="margin-top:16px;"></div>
+    </div>`;
+  }
+  return html;
+}
+
+document.getElementById('track-btn').addEventListener('click', doTrack);
+document.getElementById('track-ref').addEventListener('keydown', e=>{ if(e.key==='Enter') doTrack(); });
+function doTrack(){
+  const ref = document.getElementById('track-ref').value.trim().toUpperCase();
+  const resultEl = document.getElementById('track-result');
+  const c = complaints.find(x=>x.anon_ref===ref);
+  if(!c){ resultEl.innerHTML = `<div class="flash error">No complaint found with that tracking code. Please check and try again.</div>`; return; }
+  resultEl.innerHTML = `<div style="padding-top:16px; border-top:2px solid var(--line);">${renderComplaintCard(c,{showConfirm:true})}</div>`;
+  const yes = document.getElementById('confirm-yes'), no = document.getElementById('confirm-no');
+  if(yes) yes.addEventListener('click', ()=>doConfirm(c,true));
+  if(no) no.addEventListener('click', ()=>doConfirm(c,false));
+}
+function doConfirm(c, satisfied){
+  const secret = document.getElementById('confirm-secret').value;
+  const flashEl = document.getElementById('confirm-flash');
+  if(secret !== c.secret_key){ flash(flashEl,"Secret key does not match our records for this complaint.","error"); return; }
+  const comment = document.getElementById('confirm-comment').value;
+  confirmResolution(c, satisfied, comment);
+  doTrack();
+  renderBoard();
+}
+
+/* ---- board ---- */
+const deptSelect = document.getElementById('board-dept');
+DEPARTMENTS.forEach(d=>{ const o=document.createElement('option'); o.textContent=d; deptSelect.appendChild(o); });
+['board-q','board-dept','board-status'].forEach(id=>document.getElementById(id).addEventListener('input', renderBoard));
+
+function renderBoard(){
+  const q = document.getElementById('board-q').value.trim().toLowerCase();
+  const dept = document.getElementById('board-dept').value;
+  const status = document.getElementById('board-status').value;
+  let list = [...complaints];
+  if(q) list = list.filter(c=>c.text.toLowerCase().includes(q));
+  if(dept) list = list.filter(c=>c.department===dept);
+  if(status) list = list.filter(c=>c.status===status);
+  list.sort((a,b)=>b.support_count - a.support_count || b.created_at - a.created_at);
+  const el = document.getElementById('board-list');
+  if(!list.length){ el.innerHTML = `<div class="empty-state">No complaints match these filters yet.</div>`; return; }
+  el.innerHTML = list.map(c=>`
+    <div class="complaint-row">
+      <div class="complaint-main">
+        <span class="ref-chip">${c.anon_ref}</span>
+        <span class="severity sev-${c.severity}" style="margin-left:12px;font-size:13.5px;">${c.severity}</span>
+        <p style="margin:10px 0 6px; font-weight:500; font-size:15px; color:var(--ink);">${c.text.length>120? c.text.slice(0,120)+'…' : c.text}</p>
+        <div class="complaint-meta"><strong>${c.department}</strong> · ${c.address||'Map Pin'} · ${c.support_count} report${c.support_count>1?'s':''}${c.photo?' · 📷 Photo attached':''}</div>
+      </div>
+      <div class="complaint-side">
+        <span class="stamp ${c.status}">${statusLabel(c.status)}</span>
+        <button class="btn secondary" style="padding:6px 16px;font-size:13px;" onclick="viewBoardDetail(${c.id})">View Details</button>
+      </div>
+    </div>`).join('');
+}
+window.viewBoardDetail = function(id){
+  const c = complaints.find(x=>x.id===id);
+  const el = document.getElementById('board-list');
+  el.innerHTML = `<button class="btn secondary" style="margin-bottom:24px;" onclick="renderBoard()">← Back to Register</button>` + renderComplaintCard(c);
+};
+
+/* ---- officer roster table ---- */
+const rosterBody = document.getElementById('officer-roster');
+DEPARTMENTS.forEach(d=>{
+  const usernames = [1,2,3].map(l=>`${slug(d)}-L${l}`).join('<br>');
+  rosterBody.innerHTML += `<tr><td style="font-weight:600;">${d}</td><td class="mono" style="font-size:13px; color:var(--navy);">${usernames}</td></tr>`;
+});
+
+/* ---- officer login/dashboard ---- */
+document.getElementById('off-login-btn').addEventListener('click', ()=>{
+  const u = document.getElementById('off-user').value.trim();
+  const p = document.getElementById('off-pass').value.trim();
+  const off = officers.find(o=>o.username===u && o.password===p);
+  const flashEl = document.getElementById('flash-officer');
+  if(!off){ flash(flashEl,"Invalid credentials. Use the demo roster below.","error"); return; }
+  currentOfficer = off;
+  document.getElementById('officer-login-panel').style.display='none';
+  document.getElementById('officer-dashboard-panel').style.display='block';
+  renderOfficerDashboard();
+});
+document.getElementById('off-logout-btn').addEventListener('click', ()=>{
+  currentOfficer = null;
+  document.getElementById('officer-dashboard-panel').style.display='none';
+  document.getElementById('officer-detail-panel').style.display='none';
+  document.getElementById('officer-login-panel').style.display='block';
+  document.getElementById('off-user').value='';
+  document.getElementById('off-pass').value='';
+});
+document.getElementById('officer-back-btn').addEventListener('click', ()=>{
+  document.getElementById('officer-detail-panel').style.display='none';
+  document.getElementById('officer-dashboard-panel').style.display='block';
+  renderOfficerDashboard();
+});
+
+function renderOfficerDashboard(){
+  document.getElementById('off-dept-name').textContent = currentOfficer.department;
+  document.getElementById('off-level-tag').innerHTML = `<span class="stamp Open" style="margin-left:12px; background:var(--navy); color:white;">${LEVEL_NAMES[currentOfficer.level]}</span>`;
+  const queue = complaints.filter(c=>c.department===currentOfficer.department && c.level===currentOfficer.level && !['Closed'].includes(c.status));
+  const el = document.getElementById('officer-queue');
+  el.innerHTML = `<div style="margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--line);"><button class="btn secondary" id="sweep-btn" style="font-size:13px; padding:8px 16px;">Force Escalation Sweep</button> <span class="hint" id="sweep-result" style="margin-left:12px; font-weight:600;"></span></div>`;
+  if(!queue.length){
+    el.innerHTML += `<div class="empty-state">No open complaints in your queue at this level right now.</div>`;
+  } else {
+    queue.sort((a,b)=> (SEVERITY_RANK[a.severity]-SEVERITY_RANK[b.severity]) || (b.support_count-a.support_count));
+    el.innerHTML += queue.map(c=>`
+      <div class="complaint-row">
+        <div class="complaint-main">
+          <span class="ref-chip">${c.anon_ref}</span>
+          <span class="severity sev-${c.severity}" style="margin-left:12px;font-size:13.5px;">${c.severity}</span>
+          <p style="margin:10px 0 6px; font-weight:500; font-size:15px; color:var(--ink);">${c.text.length>120? c.text.slice(0,120)+'…' : c.text}</p>
+          <div class="complaint-meta">${c.support_count} report${c.support_count>1?'s':''} · ${c.address||'Map Pin'}${c.photo?' · 📷 Photo attached':''}</div>
+        </div>
+        <div class="complaint-side">
+          <span class="stamp ${c.status}">${statusLabel(c.status)}</span>
+          <button class="btn" style="padding:8px 20px;font-size:13.5px;" onclick="openOfficerDetail(${c.id})">Take Action</button>
+        </div>
+      </div>`).join('');
+  }
+  document.getElementById('sweep-btn').addEventListener('click', ()=>{
+    const n = runEscalationSweep();
+    document.getElementById('sweep-result').textContent = `System check complete: Escalated ${n} complaint(s) due to SLA breach.`;
+    renderOfficerDashboard(); renderBoard();
+  });
+}
+
+window.openOfficerDetail = function(id){
+  const c = complaints.find(x=>x.id===id);
+  document.getElementById('officer-dashboard-panel').style.display='none';
+  document.getElementById('officer-detail-panel').style.display='block';
+  const body = document.getElementById('officer-detail-body');
+  body.innerHTML = renderComplaintCard(c) + `
+    <div style="margin-top:32px;border-top:1px solid var(--line);padding-top:24px; background:rgba(0,0,0,0.02); padding:24px; border-radius:12px;">
+      <h4 style="font-size:20px; color:var(--navy);">Take Official Action</h4>
+      <textarea id="off-message" placeholder="e.g., Acknowledged — dispatching team to site." style="min-height:90px; margin-top:12px;"></textarea>
+      <div style="margin-top:16px;display:flex;gap:12px;">
+        <button class="btn" id="off-respond-btn">Send Update to Citizen</button>
+        <button class="btn green" id="off-resolve-btn">Mark as Resolved</button>
+      </div>
+      <div id="off-detail-flash" style="margin-top:16px;"></div>
+    </div>`;
+  document.getElementById('off-respond-btn').addEventListener('click', ()=>{
+    const msg = document.getElementById('off-message').value.trim() || "Acknowledged - work in progress.";
+    respond(c, currentOfficer.username, msg);
+    flash(document.getElementById('off-detail-flash'),"Response recorded and published to the public register.","info");
+    openOfficerDetail(id);
+  });
+  document.getElementById('off-resolve-btn').addEventListener('click', ()=>{
+    const msg = document.getElementById('off-message').value.trim() || "Issue resolved by department.";
+    resolve(c, currentOfficer.username, msg);
+    flash(document.getElementById('off-detail-flash'),"Marked as resolved. Awaiting final citizen confirmation.","success");
+    openOfficerDetail(id);
+  });
+};
+
+/* ---- reset ---- */
+document.getElementById('reset-demo-btn').addEventListener('click', ()=>{
+  seedDemo();
+  renderAll();
+  document.getElementById('track-result').innerHTML='';
+});
+
+function renderAll(){
+  renderBoard();
+  renderMyProfile();
+  if(currentOfficer && document.getElementById('officer-dashboard-panel').style.display!=='none'){
+    renderOfficerDashboard();
+  }
+}
+renderAll();
+</script>
+</body>
+</html>

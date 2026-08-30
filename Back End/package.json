@@ -1,0 +1,14 @@
+{
+  "name": "jan-prashasan-setu-backend",
+  "version": "1.0.0",
+  "description": "Backend + database for the Jan Prashasan Setu grievance redressal public register",
+  "main": "server.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {}
+}
